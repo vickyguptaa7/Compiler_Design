@@ -57,6 +57,7 @@ void cfgInputFromFile(map<char, vector<string>> &cfgList, char &startSymbol, map
 
 void Union(set<char> &s1, set<char> &s2, bool isAddEpsilon = true, bool isFollow = false)
 {
+    bool isEpsilonInS1 = s1.count('#');
     for (set<char>::iterator ele = s2.begin(); ele != s2.end(); ele++)
     {
         if (s1.count(*ele))
@@ -68,7 +69,7 @@ void Union(set<char> &s1, set<char> &s2, bool isAddEpsilon = true, bool isFollow
         s1.erase('#');
         return;
     }
-    if (!s1.count('#') && s2.count('#') && !isAddEpsilon)
+    if (!isEpsilonInS1 && s2.count('#') && !isAddEpsilon)
     {
         s1.erase('#');
     }
@@ -100,7 +101,7 @@ void calculateFirstHelper(char src, char par, map<char, vector<string>> &cfgList
             // if its child epsilon then we don't need to proceed further
             if (cfgList[src][i][j] == '#')
                 continue;
-            Union(first[src], first[cfgList[src][i][j]], j == cfgList[src][i].size());
+            Union(first[src], first[cfgList[src][i][j]], j + 1 == cfgList[src][i].size());
             // if we did not find a epsilon then we do not proceed for further children processing of the same childList (or same production)
             if (!first[cfgList[src][i][j]].count('#'))
                 break;
