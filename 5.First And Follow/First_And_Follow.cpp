@@ -125,7 +125,7 @@ void calculateFollow(map<char, vector<string>> cfgList, map<char, set<char>> &fo
     // add the $ to start symbol
     follows[startSymbol].insert('$');
 
-    map<char, vector<char>> addToFollowList;
+    map<char, set<char>> addToFollowList;
     for (map<char, vector<string>>::iterator rhs = cfgList.begin(); rhs != cfgList.end(); ++rhs)
     {
         vector<string> lhs = rhs->second;
@@ -147,30 +147,41 @@ void calculateFollow(map<char, vector<string>> cfgList, map<char, set<char>> &fo
                 }
                 if (!isEnded && lhs[i][j] != rhs->first)
                 {
+                    cout << rhs->first << " " << lhs[i][j] << "\n";
                     // if reach to end then we have to add the follow of rhs to that variable
-                    addToFollowList[rhs->first].push_back(lhs[i][j]);
+                    addToFollowList[rhs->first].insert(lhs[i][j]);
                     // storing it in reverse order
                 }
             }
         }
     }
+    cout << "\n\n";
     // here toposort must be used to find the dependencies whom will calculated first
 
     map<char, int> inorder;
-    for (map<char, vector<char>>::iterator it = addToFollowList.begin(); it != addToFollowList.end(); it++)
+    for (map<char, set<char>>::iterator it = addToFollowList.begin(); it != addToFollowList.end(); it++)
     {
         // adding the nodes to the inorder list
         inorder[it->first] = inorder[it->first];
-        for (int i = 0; i < it->second.size(); i++)
+        for (set<char>::iterator pt = it->second.begin(); pt != it->second.end(); pt++)
         {
-            inorder[it->second[i]]++;
+            inorder[*pt]++;
         }
     }
+    for (auto x : inorder)
+    {
+        cout << x.first << " " << x.second << "\n";
+    }
+    cout << "\n\n";
     queue<char> que;
+    vector<char> topoOrder;
     for (map<char, int>::iterator it = inorder.begin(); it != inorder.end(); it++)
     {
         if (it->second == 0)
+        {
+            topoOrder.push_back(it->first);
             que.push(it->first);
+        }
     }
     if (que.empty())
     {
@@ -181,16 +192,23 @@ void calculateFollow(map<char, vector<string>> cfgList, map<char, set<char>> &fo
     {
         char src = que.front();
         que.pop();
-        for (int i = 0; i < addToFollowList[src].size(); i++)
+        for (set<char>::iterator it = addToFollowList[src].begin(); it != addToFollowList[src].end(); it++)
         {
-            inorder[addToFollowList[src][i]]--;
-            if (inorder[addToFollowList[src][i]] == 0)
+            inorder[*it]--;
+            if (inorder[*it] == 0)
             {
-                cout << src << " " << addToFollowList[src][i] << "\n";
+                cout << src << " " << *it << "\n";
                 // union in reverse bcoz stored in reverse order
-                Union(follows[addToFollowList[src][i]], follows[src], false, true);
-                que.push(addToFollowList[src][i]);
+                topoOrder.push_back(*it);
+                que.push(*it);
             }
+        }
+    }
+    for (int i = 0; i < topoOrder.size(); i++)
+    {
+        for (set<char>::iterator it = addToFollowList[topoOrder[i]].begin(); it != addToFollowList[topoOrder[i]].end(); it++)
+        {
+            Union(follows[*it], follows[topoOrder[i]], false, true);
         }
     }
 }
