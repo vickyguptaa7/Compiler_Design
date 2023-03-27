@@ -7,7 +7,7 @@
 #include <map>
 #include <string.h>
 #include <sstream>
-#include <stack>
+#include <queue>
 using namespace std;
 
 typedef long long ll;
@@ -125,7 +125,7 @@ void calculateFollow(map<char, vector<string>> cfgList, map<char, set<char>> &fo
     // add the $ to start symbol
     follows[startSymbol].insert('$');
 
-    stack<pair<char, char>> addToFollow;
+    map<char, vector<char>> addToFollowList;
     for (map<char, vector<string>>::iterator rhs = cfgList.begin(); rhs != cfgList.end(); ++rhs)
     {
         vector<string> lhs = rhs->second;
@@ -148,16 +148,50 @@ void calculateFollow(map<char, vector<string>> cfgList, map<char, set<char>> &fo
                 if (!isEnded && lhs[i][j] != rhs->first)
                 {
                     // if reach to end then we have to add the follow of rhs to that variable
-                    addToFollow.push(make_pair(lhs[i][j], rhs->first));
+                    addToFollowList[rhs->first].push_back(lhs[i][j]);
+                    // storing it in reverse order
                 }
             }
         }
     }
-    while (!addToFollow.empty())
+    // here toposort must be used to find the dependencies whom will calculated first
+
+    map<char, int> inorder;
+    for (map<char, vector<char>>::iterator it = addToFollowList.begin(); it != addToFollowList.end(); it++)
     {
-        pair<char, char> add = addToFollow.top();
-        addToFollow.pop();
-        Union(follows[add.first], follows[add.second]);
+        // adding the nodes to the inorder list
+        inorder[it->first] = inorder[it->first];
+        for (int i = 0; i < it->second.size(); i++)
+        {
+            inorder[it->second[i]]++;
+        }
+    }
+    queue<char> que;
+    for (map<char, int>::iterator it = inorder.begin(); it != inorder.end(); it++)
+    {
+        if (it->second == 0)
+            que.push(it->first);
+    }
+    if (que.empty())
+    {
+        cout << "Circular Dependency!\n";
+        return;
+    }
+    while (!que.empty())
+    {
+        char src = que.front();
+        que.pop();
+        for (int i = 0; i < addToFollowList[src].size(); i++)
+        {
+            inorder[addToFollowList[src][i]]--;
+            if (inorder[addToFollowList[src][i]] == 0)
+            {
+                cout << src << " " << addToFollowList[src][i] << "\n";
+                // union in reverse bcoz stored in reverse order
+                Union(follows[addToFollowList[src][i]], follows[src], false, true);
+                que.push(addToFollowList[src][i]);
+            }
+        }
     }
 }
 
