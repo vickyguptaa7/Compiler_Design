@@ -120,6 +120,20 @@ void calculateFirst(map<char, vector<string>> &cfgList, map<char, set<char>> &fi
     }
 }
 
+void cyclicDependencySolver(char src, map<char, set<char>> &addToFollowList, map<char, set<char>> &follows, set<char> &nFollowSet, map<char, int> &inorder)
+{
+    inorder.erase(src);
+    Union(nFollowSet, follows[src], false, true);
+    for (set<char>::iterator it = addToFollowList[src].begin(); it != addToFollowList[src].end(); ++it)
+    {
+        if (inorder.count(*it))
+        {
+            cyclicDependencySolver(*it, addToFollowList, follows, nFollowSet, inorder);
+        }
+    }
+    Union(follows[src], nFollowSet, false, true);
+}
+
 void calculateFollow(map<char, vector<string>> cfgList, map<char, set<char>> &follows, map<char, set<char>> &firsts, char startSymbol)
 {
     // add the $ to start symbol
@@ -183,10 +197,15 @@ void calculateFollow(map<char, vector<string>> cfgList, map<char, set<char>> &fo
             que.push(it->first);
         }
     }
+    for (int i = 0; i < topoOrder.size(); i++)
+    {
+        inorder.erase(topoOrder[i]);
+    }
+
     if (que.empty())
     {
         cout << "Circular Dependency!\n";
-        return;
+        // return;
     }
     while (!que.empty())
     {
@@ -197,6 +216,7 @@ void calculateFollow(map<char, vector<string>> cfgList, map<char, set<char>> &fo
             inorder[*it]--;
             if (inorder[*it] == 0)
             {
+                inorder.erase(*it);
                 cout << src << " " << *it << "\n";
                 // union in reverse bcoz stored in reverse order
                 topoOrder.push_back(*it);
@@ -209,6 +229,21 @@ void calculateFollow(map<char, vector<string>> cfgList, map<char, set<char>> &fo
         for (set<char>::iterator it = addToFollowList[topoOrder[i]].begin(); it != addToFollowList[topoOrder[i]].end(); it++)
         {
             Union(follows[*it], follows[topoOrder[i]], false, true);
+        }
+    }
+
+    vector<char> left;
+    for (map<char, int>::iterator it = inorder.begin(); it != inorder.end(); it++)
+    {
+        left.push_back(it->first);
+    }
+
+    for (int i = 0; i < left.size(); i++)
+    {
+        if (inorder.count(left[i]))
+        {
+            set<char> nFollowSet;
+            cyclicDependencySolver(left[i], addToFollowList, follows, nFollowSet, inorder);
         }
     }
 }

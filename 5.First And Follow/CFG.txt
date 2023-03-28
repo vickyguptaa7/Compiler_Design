@@ -1,8 +1,6 @@
-S->ACB
-S->bB
-A->da
-A->BC
+S->aA
+S->Ae
+A->bB
 A->#
-B->g
-C->h
-C->#
+B->sS
+A->Bd
